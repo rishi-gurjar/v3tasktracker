@@ -13,123 +13,398 @@
 
     <div id = "t-div">
 
-        <h2>Tasks</h2>
+        <h2>Suggested high-impact tasks:</h2>
         
-        <button id="view-tasks">View all tasks</button>
-        <div id="cards"></div>
-
-
+        <button id="view-tasks-all">View all tasks</button>
+        <br>
         <button id="view-tasks-today">View today's tasks</button>
-        <div id="cards2"></div>
     
-<br>
-<br>
+        <div class="button-container">
+            <h2>I have </h2>
+            <button class="button-class" id="two">2 minutes</button>
+            <button class="button-class" id="five">5 minutes</button>
+            <button class="button-class" id="fifteen">15 minutes</button>
+            <button class="button-class" id="thirty">30 minutes</button>
+            <button class="button-class" id="onehour">1 hour</button>
+            <button class="button-class" id="twohours">2 hours</button>
+          </div>
+          <div class="button-container2">
+            <button class="button-class2" id="done-button" disabled>Done</button>
+            <button class="button-class2" id="postpone-button" disabled>Postpone</button>
+          </div>
+        <br>
+        <br>
 
         <div id="table_div"></div>
 
-
-
         <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+
+            var button = document.getElementById("two");
+            button.addEventListener("click", filterByMinutes);
+
+            var button = document.getElementById("five");
+            button.addEventListener("click", filterByMinutes);
+
+            var button = document.getElementById("fifteen");
+            button.addEventListener("click", filterByMinutes);
+
+            var button = document.getElementById("thirty");
+            button.addEventListener("click", filterByMinutes);
+
+            var button = document.getElementById("onehour");
+            button.addEventListener("click", filterByMinutes);
+
+            var button = document.getElementById("twohours");
+            button.addEventListener("click", filterByMinutes);
+
+
+            function filterByMinutes(event) {
+                console.log('Button clicked:', event.target.id);
+
+                let tarid = event.target.id;
+                google.charts.load('current', {'packages':['table']});
+                google.charts.setOnLoadCallback(fetchData);
+
+                function fetchData() {
+                    fetch('/data') // Fetch from the same host and port where the front-end is served
+                        .then(response => response.json())
+                        .then(data => {
+                        console.log(data);
+                        drawTable(data);
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+
+                function drawTable(dataRows) {
+                    let dataRowsOg = dataRows;
+                    console.log("Data rows og1", dataRowsOg);
+                    dataRows = removeFifth(dataRows);
+                    console.log("UPDATED:", dataRows);
+                    dataRows = dataRows.map(row => {
+                    let newRow = [...row];
+                    if (Array.isArray(row[3])) {
+                        newRow[3] = row[3][0] || 'N/A';
+                        newRow.push(row[3][1] || 'N/A');
+                    } else {
+                        newRow[3] = 'N/A';
+                        newRow.push('N/A');
+                    }
+                    return newRow;
+                    });
+
+
+                    console.log("HERE:", dataRows);
+
+                    if(event.target.id == "two") {
+                        if(dataRows = dataRows.filter(row => row[4] === "N/A")) {
+                            dataRows = dataRows.filter(row => row[3] === "2");
+                        } else {
+                            dataRows = dataRows.filter(row => row[4] === "2");
+                        }
+                    } else if(event.target.id == "five") {
+                        dataRows = dataRows.filter(row => (row[3] === "2") || (row[4] === "5"));
+                    } else if(event.target.id == "fifteen") {
+                        dataRows = dataRows.filter(row => (row[3] === "2") || (row[4] === "5") || (row[4] === "15"));
+                    } else if(event.target.id == "thirty") {
+                        dataRows = dataRows.filter(row => (row[3] === "2") || (row[4] === "5") || (row[4] === "15") || (row[4] === "30"));
+                    } else if(event.target.id == "onehour") {
+                        dataRows = dataRows.filter(row => (row[3] === "2") || (row[4] === "5") || (row[4] === "15") || (row[4] === "30") || (row[4] === "60"));
+                    } else {
+                        dataRows = dataRows.filter(row => (row[3] === "2") || (row[4] === "5") || (row[4] === "15") || (row[4] === "30") || (row[4] === "60") || (row[4] === "120"));
+                    }
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Name');
+                    data.addColumn('string', 'List');
+                    data.addColumn('string', 'Due Date');
+                    data.addColumn('string', 'Minimum time (min)'); // Adding column for first label
+                    data.addColumn('string', 'Maximum time (min)'); // Adding column for second label
+                    data.addRows(dataRows); // Here we are passing fetched data
+
+                    
+                    var table = new google.visualization.Table(document.getElementById('table_div'));
+
+                    let selectedRow = null;
+                    let firstCellData = null;  // Define firstCellData here
+
+                    google.visualization.events.addListener(table, 'select', () => {
+                        const selection = table.getSelection();
+                        if (selection.length > 0) {
+                            selectedRow = selection[0].row;
+                            document.getElementById('done-button').disabled = false;
+
+                            firstCellData = data.getValue(selectedRow, 0);  // Update firstCellData here
+                            console.log("FIRST CELL DATA", firstCellData);
+                        } else {
+                            selectedRow = null;
+                            document.getElementById('done-button').disabled = true;
+                        }
+                    });
+
+                    document.getElementById('done-button').addEventListener('click', function() {
+                        if (selectedRow !== null) {
+                            // Get the selected card from dataRowsOg using selectedRow
+                            let selectedCard = dataRowsOg[selectedRow];
+                            console.log("Data rows og2", dataRowsOg);
+                            let idCard = findCardIdByName(dataRowsOg, firstCellData);  // Use firstCellData here
+
+                            // Call updateTaskState with the card ID and check item ID
+                            updateCardClosedState(idCard, true)
+
+                            document.getElementById('done-button').disabled = true;
+                            selectedRow = null;
+                        }
+                    });
+
+
+
+                    table.draw(data, {
+                        showRowNumber: true, 
+                        width: '100%', 
+                        height: '100%',
+                        cssClassNames: {
+                            headerRow: 'table-header',
+                            tableCell: 'table-cell',
+                        }
+                    });
+                }
+
+            }
+
+
+            var button = document.getElementById("view-tasks-all");
+            button.addEventListener("click", all);
 
             let apiKey1 = '6cd8dea3d71bd02098090d1b8e0cb081';
             let token1 = 'ATTAba67372b1bd203630a1176d60cabb2607a7990ba784151e467b341a5447023faE22124CE';
-            let boardId1 = '6499f8aa7ecd1d6854a8586c';
+
             let isClicked = false; // Declare isClicked here
+            
+            function all() {
 
-google.charts.load('current', {'packages':['table']});
-google.charts.setOnLoadCallback(fetchData);
+                google.charts.load('current', {'packages':['table']});
+                google.charts.setOnLoadCallback(fetchData);
 
-function fetchData() {
-  fetch('/data') // Fetch from the same host and port where the front-end is served
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      drawTable(data);
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-function drawTable(dataRows) {
-    var data = new google.visualization.DataTable();
-    data.addColumn('string', 'Name');
-    data.addColumn('string', 'List');
-    data.addColumn('string', 'Due Date');
-    data.addRows(dataRows); // Here we are passing fetched data
-
-    var table = new google.visualization.Table(document.getElementById('table_div'));
-    table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
-}
-
-
-
-    document.getElementById("view-tasks").addEventListener("click", function() {
-    if (!isClicked) {
-        isClicked = true;
-        boonk();
-    } else {
-        document.getElementById("cards").textContent = "";
-        isClicked = false;
-    }
-});
-
-function boonk() {
-    fetch(`https://api.trello.com/1/boards/${boardId1}/cards?key=${apiKey1}&token=${token1}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(cards => {
-            let cardsDiv = document.getElementById('cards');
-            cards.forEach(card => {
-                let cardElement = document.createElement('h3');
-                cardElement.textContent = card.name;
-                cardsDiv.appendChild(cardElement);
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-}
-
-
-
-let isClicked1 = false; // Declare isClicked here
-
-document.getElementById("view-tasks-today").addEventListener("click", function() {
-    if (!isClicked1) {
-        isClicked1 = true;
-        boonk_today();
-    } else {
-        document.getElementById("cards2").textContent = "";
-        isClicked1 = false;
-    }
-});
-
-function boonk_today() {
-    fetch(`https://api.trello.com/1/boards/${boardId1}/cards?key=${apiKey1}&token=${token1}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(cards => {
-            let cardsDiv = document.getElementById('cards2');
-            cards.forEach(card => {
-                if (card.idList === '6499f8b6309787a7edbb08fd') { // Replace 'YOUR_TODAY_LIST_ID' with the actual ID of the "today" list
-                    let cardElement = document.createElement('h3');
-                    cardElement.textContent = card.name;
-                    cardsDiv.appendChild(cardElement);
+                function fetchData() {
+                    fetch('/data') // Fetch from the same host and port where the front-end is served
+                        .then(response => response.json())
+                        .then(data => {
+                        console.log(data);
+                        drawTable(data);
+                        })
+                        .catch(error => console.error('Error:', error));
                 }
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
 
-}
+                function drawTable(dataRows) {
+                    let dataRowsOg = dataRows;
+                    dataRows = removeFifth(dataRows);
+                    dataRows = dataRows.map(row => {
+                    let newRow = [...row];
+                    if (Array.isArray(row[3])) {
+                        newRow[3] = row[3][0] || 'N/A';
+                        newRow.push(row[3][1] || 'N/A');
+                    } else {
+                        newRow[3] = 'N/A';
+                        newRow.push('N/A');
+                    }
+                    return newRow;
+                    });
+
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Name');
+                    data.addColumn('string', 'List');
+                    data.addColumn('string', 'Due Date');
+                    data.addColumn('string', 'Minimum time (min)'); // Adding column for first label
+                    data.addColumn('string', 'Maximum time (min)'); // Adding column for second label
+                    data.addRows(dataRows); // Here we are passing fetched data
+
+                    var table = new google.visualization.Table(document.getElementById('table_div'));
+
+                    let selectedRow = null;
+                    let firstCellData = null;  // Define firstCellData here
+
+                    google.visualization.events.addListener(table, 'select', () => {
+                        const selection = table.getSelection();
+                        if (selection.length > 0) {
+                            selectedRow = selection[0].row;
+                            document.getElementById('done-button').disabled = false;
+
+                            firstCellData = data.getValue(selectedRow, 0);  // Update firstCellData here
+                            console.log("FIRST CELL DATA", firstCellData);
+                        } else {
+                            selectedRow = null;
+                            document.getElementById('done-button').disabled = true;
+                        }
+                    });
+
+                    document.getElementById('done-button').addEventListener('click', function() {
+                        if (selectedRow !== null) {
+                            // Get the selected card from dataRowsOg using selectedRow
+                            let selectedCard = dataRowsOg[selectedRow];
+                            console.log("Data rows og2", dataRowsOg);
+                            let idCard = findCardIdByName(dataRowsOg, firstCellData);  // Use firstCellData here
+
+                            // Call updateTaskState with the card ID and check item ID
+                            updateCardClosedState(idCard, true)
+
+                            document.getElementById('done-button').disabled = true;
+                            selectedRow = null;
+                        }
+                    });
+
+                    table.draw(data, {
+                        showRowNumber: true, 
+                        width: '100%', 
+                        height: '100%',
+                        cssClassNames: {
+                            headerRow: 'table-header',
+                            tableCell: 'table-cell',
+                        }
+                    });
+                }
+            }
+
+            var button = document.getElementById("view-tasks-today");
+            button.addEventListener("click", today);
+
+            function today() {
+
+                google.charts.load('current', {'packages':['table']});
+                google.charts.setOnLoadCallback(fetchData);
+
+                function fetchData() {
+                    fetch('/data') // Fetch from the same host and port where the front-end is served
+                        .then(response => response.json())
+                        .then(data => {
+                        console.log(data);
+                        drawTable(data);
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+
+                function drawTable(dataRows) {
+                    let dataRowsOg = dataRows;
+                    dataRows = removeFifth(dataRows);
+                    dataRows = dataRows.map(row => {
+                    let newRow = [...row];
+                    if (Array.isArray(row[3])) {
+                        newRow[3] = row[3][0] || 'N/A';
+                        newRow.push(row[3][1] || 'N/A');
+                    } else {
+                        newRow[3] = 'N/A';
+                        newRow.push('N/A');
+                    }
+                    return newRow;
+                    });
+
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Name');
+                    data.addColumn('string', 'List');
+                    data.addColumn('string', 'Due Date');
+                    data.addColumn('string', 'Minimum time (min)'); // Adding column for first label
+                    data.addColumn('string', 'Maximum time (min)'); // Adding column for second label
+                    dataRows = dataRows.filter(row => row[1] === "today");
+                    data.addRows(dataRows); // Here we are passing fetched data
+
+                    var table = new google.visualization.Table(document.getElementById('table_div'));
+
+                    let selectedRow = null;
+                    let firstCellData = null;  // Define firstCellData here
+
+                    google.visualization.events.addListener(table, 'select', () => {
+                        const selection = table.getSelection();
+                        if (selection.length > 0) {
+                            selectedRow = selection[0].row;
+                            document.getElementById('done-button').disabled = false;
+
+                            firstCellData = data.getValue(selectedRow, 0);  // Update firstCellData here
+                            console.log("FIRST CELL DATA", firstCellData);
+                        } else {
+                            selectedRow = null;
+                            document.getElementById('done-button').disabled = true;
+                        }
+                    });
+
+                    document.getElementById('done-button').addEventListener('click', function() {
+                        if (selectedRow !== null) {
+                            // Get the selected card from dataRowsOg using selectedRow
+                            let selectedCard = dataRowsOg[selectedRow];
+                            console.log("Data rows og2", dataRowsOg);
+                            let idCard = findCardIdByName(dataRowsOg, firstCellData);  // Use firstCellData here
+
+                            // Call updateTaskState with the card ID and check item ID
+                            updateCardClosedState(idCard, true)
+
+                            document.getElementById('done-button').disabled = true;
+                            selectedRow = null;
+                        }
+                    });
+
+                    table.draw(data, {
+                        showRowNumber: true, 
+                        width: '100%', 
+                        height: '100%',
+                        cssClassNames: {
+                            headerRow: 'table-header',
+                            tableCell: 'table-cell',
+                        }
+                    });
+
+
+                }           
+            }
+
+            function updateCardClosedState(idCard, closedState) {
+                let apiKey1 = '6cd8dea3d71bd02098090d1b8e0cb081';
+                  let token1 = 'ATTAba67372b1bd203630a1176d60cabb2607a7990ba784151e467b341a5447023faE22124CE';
+
+                fetch(`https://api.trello.com/1/cards/${idCard}?key=${apiKey1}&token=${token1}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        closed: closedState // The new closed state of the card, either true (archived) or false (not archived)
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        console.log('Card closed state updated successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            function removeFifth(dataRows) {
+                return dataRows.map(row => {
+                    const updatedRow = [...row];
+                    updatedRow.splice(4, 1);
+                    return updatedRow;
+                });
+            }
+
+            function findCardIdByName(dataRowsOg, name) {
+                // Find the card with the given name
+                // console.log("name", name);
+
+                let card = dataRowsOg.find(row => row[0] === name);
+
+                // If the card was found, return its ID
+                if (card) {
+                    console.log("name", card);
+                    return card[4];
+                }
+
+                // If the card was not found, return null
+                return null;
+            }
+
+
+     });
+
         </script>
 
     </div>

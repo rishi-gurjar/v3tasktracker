@@ -1,14 +1,21 @@
+
+@font-face {
+    font-family: Berkeley-Mono;
+    src: url(fonts/BerkeleyMonoTrial-Regular.ttf);
+    }
+
+
 h1 {
-    font-family: 'Helvetica', sans-serif;
+    font-family: 'Berkeley-Mono';
 }
 h2 {
-    font-family: 'Helvetica', sans-serif;
+    font-family: 'Berkeley-Mono';
     font-size: medium;
     font-weight: 300;
 }
 
 h3 {
-    font-family: 'Helvetica', sans-serif;
+    font-family: 'Berkeley-Mono';
     font-size: smaller;
     font-weight: 500;
 }
@@ -20,3 +27,44 @@ h3 {
     justify-content: center;
     text-align: center;
   }
+
+  .table-header {
+    font-family: 'Berkeley-Mono';
+  }
+  
+  .table-cell {
+    font-family: 'Berkeley-Mono';
+  }
+  
+  button {
+    font-family: 'Berkeley-Mono';
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: space-between; /* if you want to spread them across the container */
+    width: 100%; /* or set to whatever width you need */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+  }
+  .button-class {
+    margin: 5px; /* adjust as needed */
+    background-color: black;
+    color: white;
+  }
+  
+  .button-container2 {
+    display: flex;
+    justify-content: space-between; /* if you want to spread them across the container */
+    width: 100%; /* or set to whatever width you need */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+  }
+  .button-class2 {
+    margin: 5px; /* adjust as needed */
+  }
+  
