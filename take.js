@@ -1,23 +1,61 @@
 const express = require('express');
-const app = express();
-// ...define your routes...
-
-module.exports = app;
-
+require('dotenv').config();
 const axios = require('axios');
 const cors = require('cors');
+const app = express();
 const port = 3000;
 
 app.use(cors());
-
+app.use(express.json()); // To parse JSON request body
 app.use(express.static('public'));
 
-const apiKey1 = process.env.apiKey;
-const token1 = process.env.token;
-const boardId1 = process.env.boardId;
+const apiKey = process.env.apiKey;
+const token = process.env.token;
+const boardId = process.env.boardId;
+
+app.post('/submitTask', (req, res) => {
+  const { newtask, date, labelValue } = req.body;
+
+  let labelIds = [];
+  switch (labelValue) {
+    case '2-5':
+      labelIds.push('6499f8aa78ddeb58b0abff0a', '6499f8aa78ddeb58b0abff10');
+      break;
+    case '5-15':
+      labelIds.push('6499f8aa78ddeb58b0abff10', '6499f8aa78ddeb58b0abff1d');
+      break;
+    case '15-30':
+      labelIds.push('6499f8aa78ddeb58b0abff1d', '6499f8aa78ddeb58b0abff1a');
+      break;
+    case '30-60':
+      labelIds.push('6499f8aa78ddeb58b0abff1a', '6499f8aa78ddeb58b0abff1f');
+      break;
+    case '1-2':
+      labelIds.push('6499f8aa78ddeb58b0abff1f', '6499f8aa78ddeb58b0abff11');
+      break;
+  }
+
+
+  axios.post('https://api.trello.com/1/cards', {
+    key: apiKey,
+    token: token,
+    idList: "6499f98323b696430e611eae",
+    name: newtask,
+    due: date,
+    idLabels: labelIds
+  })
+  .then(response => {
+    console.log(response.data);
+    res.json({ success: true }); // Modify this line
+  })
+  .catch(error => {
+    console.error(error);
+    res.status(500).send('An error occurred');
+  });
+});
 
 app.get('/data', (req, res) => {
-    axios.get(`https://api.trello.com/1/boards/${boardId}/cards?key=${apiKey}&token=${token}`)
+axios.get(`https://api.trello.com/1/boards/${boardId}/cards?key=${apiKey}&token=${token}`)
       .then(response => {
         let cards = response.data;
         let dataRows = cards.map(card => [card.name, card.idList, card.due, card.labels, card.id || 'N/A']);
@@ -62,5 +100,5 @@ app.get('/data', (req, res) => {
         res.status(500).send('An error occurred');
       });
   });
-
+  app.use(express.static('public'));
   app.listen(port, () => console.log(`Server running at http://localhost:${port}`));

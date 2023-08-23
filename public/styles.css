@@ -40,6 +40,14 @@ h3 {
     font-family: 'Berkeley-Mono';
   }
 
+  input {
+    font-family: 'Berkeley-Mono';
+
+  }
+  select {
+    font-family: 'Berkeley-Mono';
+  }
+
   .button-container {
     display: flex;
     justify-content: space-between; /* if you want to spread them across the container */
@@ -55,6 +63,18 @@ h3 {
     color: white;
   }
   
+  .button-class-white {
+    margin: 5px; /* adjust as needed */
+    background-color: whitesmoke;
+    color: black;
+  }
+
+  .button-class-or {
+    margin: 5px; /* adjust as needed */
+    background-color: salmon;
+    color: white;
+  }
+
   .button-container2 {
     display: flex;
     justify-content: space-between; /* if you want to spread them across the container */
@@ -68,3 +88,8 @@ h3 {
     margin: 5px; /* adjust as needed */
   }
   
+  label {
+    font-family: 'Berkeley-Mono';
+    font-size: smaller;
+    font-weight: 400;
+  }

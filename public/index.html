@@ -6,7 +6,6 @@
     <title>v3 task tracker</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-
 </head>
 <body>
     <h1>v3</h1>
@@ -14,11 +13,11 @@
     <div id = "t-div">
 
         <h2>Suggested high-impact tasks:</h2>
-        
-        <button id="view-tasks-all">View all tasks</button>
+        <div class="button-container">
+            <button class="button-class-white" id="view-tasks-all">View all tasks</button>
+            <button class="button-class-or" id="view-tasks-today">View today's tasks</button>
+        </div>
         <br>
-        <button id="view-tasks-today">View today's tasks</button>
-    
         <div class="button-container">
             <h2>I have </h2>
             <button class="button-class" id="two">2 minutes</button>
@@ -28,6 +27,27 @@
             <button class="button-class" id="onehour">1 hour</button>
             <button class="button-class" id="twohours">2 hours</button>
           </div>
+
+          <div >
+            <form id= "taskForm" action="/submit" method="post">
+                <label for="newtask">My new task is</label>
+                <input class="button-class2" type="text" id="newtask" name="newtask" placeholder="eating cake?" maxlength="100">
+                <!-- Date Input -->
+                <label for="date">due on</label>
+                <input class="button-class2" type="date" id="date" name="date">
+                <!-- Dropdown Selection -->
+                <label for="range">and will take</label>
+                <select class="button-class2" id="label" name="label">
+                  <option value="2-5">2-5 minutes</option>
+                  <option value="5-15">5-15 minutes</option>
+                  <option value="15-30">15-30 minutes</option>
+                  <option value="30-60">30-60 minutes</option>
+                  <option value="1-2">1-2 hours</option>
+                </select>
+                <input class="button-class2" type="submit" value="Submit">
+              </form>
+            </div>
+
           <div class="button-container2">
             <button class="button-class2" id="done-button" disabled>Done</button>
             <button class="button-class2" id="postpone-button" disabled>Postpone</button>
@@ -67,14 +87,15 @@
                 google.charts.setOnLoadCallback(fetchData);
 
                 function fetchData() {
-                    fetch('/data') // Fetch from the same host and port where the front-end is served
+                    fetch('http://localhost:3000/data') // Updated URL
                         .then(response => response.json())
                         .then(data => {
-                        console.log(data);
-                        drawTable(data);
+                            console.log(data);
+                            drawTable(data);
                         })
                         .catch(error => console.error('Error:', error));
                 }
+
 
                 function drawTable(dataRows) {
                     let dataRowsOg = dataRows;
@@ -170,6 +191,124 @@
                 }
 
             }
+            // Attach an event listener to the "View all tasks" button
+            document.getElementById('view-tasks-all').addEventListener('click', viewAllTasks);
+
+
+            document.getElementById('taskForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const newtask = document.getElementById('newtask').value;
+            const date = document.getElementById('date').value;
+            const labelValue = document.getElementById('label').value;
+
+            fetch('/submitTask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ newtask, date, labelValue })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reset the form
+                    document.getElementById('taskForm').reset();
+
+                    // Reload the task list (you can call the appropriate function to reload the tasks)
+                    viewAllTasks();
+                } else {
+                    console.error('Task submission failed');
+                    // Handle error, e.g., show an error message
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                // Handle error, e.g., show an error message
+            });
+        });
+
+        function viewAllTasks() {
+            google.charts.load('current', {'packages':['table']});
+            google.charts.setOnLoadCallback(fetchData);
+
+            function fetchData() {
+                fetch('/data') // Fetch from the same host and port where the front-end is served
+                    .then(response => response.json())
+                    .then(data => {
+                        drawTable(data);
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            function drawTable(dataRows) {
+                let dataRowsOg = dataRows;
+                dataRows = removeFifth(dataRows);
+                dataRows = dataRows.map(row => {
+                    let newRow = [...row];
+                    if (Array.isArray(row[3])) {
+                        newRow[3] = row[3][0] || 'N/A';
+                        newRow.push(row[3][1] || 'N/A');
+                    } else {
+                        newRow[3] = 'N/A';
+                        newRow.push('N/A');
+                    }
+                    return newRow;
+                });
+
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Name');
+                data.addColumn('string', 'List');
+                data.addColumn('string', 'Due Date');
+                data.addColumn('string', 'Minimum time (min)'); // Adding column for first label
+                data.addColumn('string', 'Maximum time (min)'); // Adding column for second label
+                data.addRows(dataRows); // Here we are passing fetched data
+
+                var table = new google.visualization.Table(document.getElementById('table_div'));
+
+                let selectedRow = null;
+                let firstCellData = null;  // Define firstCellData here
+
+                google.visualization.events.addListener(table, 'select', () => {
+                    const selection = table.getSelection();
+                    if (selection.length > 0) {
+                        selectedRow = selection[0].row;
+                        document.getElementById('done-button').disabled = false;
+
+                        firstCellData = data.getValue(selectedRow, 0);  // Update firstCellData here
+                        console.log("FIRST CELL DATA", firstCellData);
+                    } else {
+                        selectedRow = null;
+                        document.getElementById('done-button').disabled = true;
+                    }
+                });
+
+                document.getElementById('done-button').addEventListener('click', function() {
+                    if (selectedRow !== null) {
+                        // Get the selected card from dataRowsOg using selectedRow
+                        let selectedCard = dataRowsOg[selectedRow];
+                        console.log("Data rows og2", dataRowsOg);
+                        let idCard = findCardIdByName(dataRowsOg, firstCellData);  // Use firstCellData here
+
+                        // Call updateTaskState with the card ID and check item ID
+                        updateCardClosedState(idCard, true)
+
+                        document.getElementById('done-button').disabled = true;
+                        selectedRow = null;
+                    }
+                });
+
+                table.draw(data, {
+                    showRowNumber: true, 
+                    width: '100%', 
+                    height: '100%',
+                    cssClassNames: {
+                        headerRow: 'table-header',
+                        tableCell: 'table-cell',
+                    }
+                });
+            }
+        }
 
 
             var button = document.getElementById("view-tasks-all");
