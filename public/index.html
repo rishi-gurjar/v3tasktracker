@@ -366,8 +366,12 @@
             var button = document.getElementById("view-tasks-all");
             button.addEventListener("click", all);
 
-            let apiKey1 = '6cd8dea3d71bd02098090d1b8e0cb081';
-            let token1 = 'ATTAba67372b1bd203630a1176d60cabb2607a7990ba784151e467b341a5447023faE22124CE';
+            //let apiKey1 = '6cd8dea3d71bd02098090d1b8e0cb081';
+            //let token1 = 'ATTAba67372b1bd203630a1176d60cabb2607a7990ba784151e467b341a5447023faE22124CE';
+
+            const apiKey1 = '<%= process.env.apiKey %>';
+            const token1 = '<%= process.env.token %>';
+            //const endpoint = '<%= process.env.endpoint %>';
 
             let isClicked = false; // Declare isClicked here
             
@@ -551,28 +555,37 @@
             }
 
             function updateCardClosedState(idCard, closedState) {
-                let apiKey1 = '6cd8dea3d71bd02098090d1b8e0cb081';
-                  let token1 = 'ATTAba67372b1bd203630a1176d60cabb2607a7990ba784151e467b341a5447023faE22124CE';
+                fetch('/api/env') // Make a request to the API route
+                    .then(response => response.json())
+                    .then(data => {
+                    const apiKey = data.apiKey;
+                    const token = data.token;
 
-                fetch(`https://api.trello.com/1/cards/${idCard}?key=${apiKey1}&token=${token1}`, {
-                    method: 'PUT',
-                    headers: {
+                    // Use apiKey and token to make the API request
+                    fetch(`https://api.trello.com/1/cards/${idCard}?key=${apiKey}&token=${token}`, {
+                        method: 'PUT',
+                        headers: {
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        closed: closedState // The new closed state of the card, either true (archived) or false (not archived)
+                        },
+                        body: JSON.stringify({
+                        closed: closedState
+                        })
                     })
-                })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                        throw new Error('Network response was not ok');
                         }
                         console.log('Card closed state updated successfully');
                     })
                     .catch(error => {
                         console.error('Error:', error);
                     });
-            }
+                    })
+                    .catch(error => {
+                    console.error('Error fetching environment variables:', error);
+                    });
+                }
+
 
             function removeFifth(dataRows) {
                 return dataRows.map(row => {

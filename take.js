@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config();
 const axios = require('axios');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const app = express();
 const port = 3000;
 
@@ -9,9 +10,20 @@ app.use(cors());
 app.use(express.json()); // To parse JSON request body
 app.use(express.static('public'));
 
+dotenv.config();
+
+app.get('/api/env', (req, res) => {
+  // Return environment variables as JSON
+  res.json({
+    apiKey: process.env.apiKey,
+    token: process.env.token
+  });
+});
+
 const apiKey = process.env.apiKey;
 const token = process.env.token;
 const boardId = process.env.boardId;
+app.use(express.static('public'));
 
 app.post('/submitTask', (req, res) => {
   const { newtask, date, labelValue, chooselist } = req.body;
