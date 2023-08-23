@@ -14,11 +14,11 @@ const token = process.env.token;
 const boardId = process.env.boardId;
 
 app.post('/submitTask', (req, res) => {
-  const { newtask, date, labelValue } = req.body;
+  const { newtask, date, labelValue, chooselist } = req.body;
 
   let labelIds = [];
   switch (labelValue) {
-    case '2-5':
+        case '2-5':
       labelIds.push('6499f8aa78ddeb58b0abff0a', '6499f8aa78ddeb58b0abff10');
       break;
     case '5-15':
@@ -35,11 +35,26 @@ app.post('/submitTask', (req, res) => {
       break;
   }
 
+  let newList;
+  switch(chooselist) {
+    case 's-t':
+      newList = '6499f8b900dc6627e5f97c61';
+      break;
+    case 'l-t':
+      newList = '6499f8bcdaf6d3944e49ecaf';
+      break;
+    case 'cre':
+      newList = '6499f8bfb3148d96e4d7b5fe';
+      break;
+    case 'ran':
+      newList = '6499f98323b696430e611eae';
+      break;
+  }
 
   axios.post('https://api.trello.com/1/cards', {
     key: apiKey,
     token: token,
-    idList: "6499f98323b696430e611eae",
+    idList: newList,
     name: newtask,
     due: date,
     idLabels: labelIds

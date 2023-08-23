@@ -6,6 +6,7 @@
     <title>v3 task tracker</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <h1>v3</h1>
@@ -36,13 +37,21 @@
                 <label for="date">due on</label>
                 <input class="button-class2" type="date" id="date" name="date">
                 <!-- Dropdown Selection -->
-                <label for="range">and will take</label>
+                <label for="range">will take</label>
                 <select class="button-class2" id="label" name="label">
                   <option value="2-5">2-5 minutes</option>
                   <option value="5-15">5-15 minutes</option>
                   <option value="15-30">15-30 minutes</option>
                   <option value="30-60">30-60 minutes</option>
                   <option value="1-2">1-2 hours</option>
+                </select>
+                <!-- List selection-->
+                <label for="chooselist">and belongs in</label>
+                <select class="button-class2" id="chooselist" name="chooselist">
+                  <option value="s-t">short-term</option>
+                  <option value="l-t">long-term</option>
+                  <option value="cre">creative</option>
+                  <option value="ran">random</option>
                 </select>
                 <input class="button-class2" type="submit" value="Submit">
               </form>
@@ -58,6 +67,43 @@
         <div id="table_div"></div>
 
         <script>
+
+            function triggerConfetti() {
+            var count = 200;
+            var defaults = {
+                origin: { y: 0.7 }
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, {
+                spread: 26,
+                startVelocity: 55,
+            });
+            fire(0.2, {
+                spread: 60,
+            });
+            fire(0.35, {
+                spread: 100,
+                decay: 0.91,
+                scalar: 0.8
+            });
+            fire(0.1, {
+                spread: 120,
+                startVelocity: 25,
+                decay: 0.92,
+                scalar: 1.2
+            });
+            fire(0.1, {
+                spread: 120,
+                startVelocity: 45,
+            });
+            }
+
     document.addEventListener('DOMContentLoaded', (event) => {
 
             var button = document.getElementById("two");
@@ -174,6 +220,9 @@
 
                             document.getElementById('done-button').disabled = true;
                             selectedRow = null;
+                            triggerConfetti();
+
+
                         }
                     });
 
@@ -197,17 +246,18 @@
 
             document.getElementById('taskForm').addEventListener('submit', function(event) {
             event.preventDefault();
-
+            
             const newtask = document.getElementById('newtask').value;
             const date = document.getElementById('date').value;
             const labelValue = document.getElementById('label').value;
+            const chooselist = document.getElementById('chooselist').value;
 
             fetch('/submitTask', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ newtask, date, labelValue })
+                body: JSON.stringify({ newtask, date, labelValue, chooselist })
             })
             .then(response => response.json())
             .then(data => {
@@ -295,6 +345,8 @@
 
                         document.getElementById('done-button').disabled = true;
                         selectedRow = null;
+
+                        triggerConfetti();
                     }
                 });
 
@@ -388,6 +440,8 @@
 
                             document.getElementById('done-button').disabled = true;
                             selectedRow = null;
+                            triggerConfetti();
+
                         }
                     });
 
@@ -476,6 +530,9 @@
 
                             document.getElementById('done-button').disabled = true;
                             selectedRow = null;
+
+                            triggerConfetti();
+
                         }
                     });
 
