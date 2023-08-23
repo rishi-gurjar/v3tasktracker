@@ -1,4 +1,4 @@
 const serverless = require('serverless-http');
-const app = require('../take.js'); // Ensure take.js exports your app
+const app = require('../take'); // Updated
 
 module.exports = serverless(app);
